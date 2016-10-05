@@ -1,53 +1,13 @@
-'use strict';
-
-var _clearImmediate2 = require('babel-runtime/core-js/clear-immediate');
-
-var _clearImmediate3 = _interopRequireDefault(_clearImmediate2);
-
-var _setImmediate2 = require('babel-runtime/core-js/set-immediate');
-
-var _setImmediate3 = _interopRequireDefault(_setImmediate2);
-
-var _defineProperty = require('babel-runtime/core-js/reflect/define-property');
-
-var _defineProperty2 = _interopRequireDefault(_defineProperty);
-
-var _promise = require('babel-runtime/core-js/promise');
-
-var _promise2 = _interopRequireDefault(_promise);
-
-var _weakSet = require('babel-runtime/core-js/weak-set');
-
-var _weakSet2 = _interopRequireDefault(_weakSet);
-
-var _set = require('babel-runtime/core-js/set');
-
-var _set2 = _interopRequireDefault(_set);
-
-var _weakMap = require('babel-runtime/core-js/weak-map');
-
-var _weakMap2 = _interopRequireDefault(_weakMap);
-
-var _map = require('babel-runtime/core-js/map');
-
-var _map2 = _interopRequireDefault(_map);
-
-function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
-
 const _ = require('lodash');
 const fs = require('fs');
 const vm = require('vm');
 const pa = require('path');
+const {EventEmitter} = require('events');
 
-var _require = require('events');
+const sb = fs.readFileSync(`${__dirname}/sandbox.jstext`, 'utf8');
+const cf = fs.readFileSync(`${__dirname}/contextify.jstext`, 'utf8');
 
-const EventEmitter = _require.EventEmitter;
-
-
-const sb = fs.readFileSync(`${ __dirname }/sandbox.jstext`, 'utf8');
-const cf = fs.readFileSync(`${ __dirname }/contextify.jstext`, 'utf8');
-
-const _compileToJS = function (code, compiler) {
+const _compileToJS = function(code, compiler) {
 	if ('function' === typeof compiler) return compiler(code);
 
 	switch (compiler) {
@@ -55,7 +15,7 @@ const _compileToJS = function (code, compiler) {
 		case 'coffee-script':
 		case 'cs':
 		case 'text/coffeescript':
-			return require('coffee-script').compile(code, { header: false, bare: true });
+			return require('coffee-script').compile(code, {header: false, bare: true});
 
 		case 'javascript':
 		case 'java-script':
@@ -64,7 +24,7 @@ const _compileToJS = function (code, compiler) {
 			return code;
 
 		default:
-			throw new VMError(`Unsupported compiler '${ compiler }'.`);
+			throw new VMError(`Unsupported compiler '${compiler}'.`);
 	}
 };
 
@@ -76,15 +36,13 @@ const _compileToJS = function (code, compiler) {
 
 class VM extends EventEmitter {
 	/**
-  * Create VM instance.
-  *
-  * @param {Object} [options] VM options.
-  * @return {VM}
-  */
+	 * Create VM instance.
+	 *
+	 * @param {Object} [options] VM options.
+	 * @return {VM}
+	 */
 
-	constructor() {
-		let options = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
-
+	constructor(options = {}) {
 		super();
 
 		// defaults
@@ -113,18 +71,18 @@ class VM extends EventEmitter {
 			VMError,
 			Proxy,
 			Reflect,
-			Map: _map2.default,
-			WeakMap: _weakMap2.default,
-			Set: _set2.default,
-			WeakSet: _weakSet2.default,
-			Promise: _promise2.default
+			Map,
+			WeakMap,
+			Set,
+			WeakSet,
+			Promise
 		};
 
-		this._context = options.context && _.cloneDeep(options.context) || vm.createContext();
+		this._context = (options.context && _.cloneDeep(options.context)) || vm.createContext();
 
-		(0, _defineProperty2.default)(this, '_internal', {
-			value: vm.runInContext(`(function(require, host) { ${ cf } \n})`, this._context, {
-				filename: `${ __dirname }/contextify.jstext`,
+		Reflect.defineProperty(this, '_internal', {
+			value: vm.runInContext(`(function(require, host) { ${cf} \n})`, this._context, {
+				filename: `${__dirname}/contextify.jstext`,
 				displayErrors: false
 			}).call(this._context, require, host)
 		});
@@ -142,11 +100,11 @@ class VM extends EventEmitter {
 	}
 
 	/**
-  * Run the code in VM.
-  *
-  * @param {String} code Code to run.
-  * @return {*} Result of executed code.
-  */
+	 * Run the code in VM.
+	 *
+	 * @param {String} code Code to run.
+	 * @return {*} Result of executed code.
+	 */
 
 	run(code) {
 		if (this.options.compiler !== 'javascript') {
@@ -178,17 +136,15 @@ class VM extends EventEmitter {
 
 class NodeVM extends EventEmitter {
 	/**
-  * Create NodeVM instance.
-  *
-  * Unlike VM, NodeVM lets you use require same way like in regular node.
-  *
-  * @param {Object} [options] VM options.
-  * @return {NodeVM}
-  */
+	 * Create NodeVM instance.
+	 *
+	 * Unlike VM, NodeVM lets you use require same way like in regular node.
+	 *
+	 * @param {Object} [options] VM options.
+	 * @return {NodeVM}
+	 */
 
-	constructor() {
-		let options = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
-
+	constructor(options = {}) {
 		super();
 
 		// defaults
@@ -208,10 +164,10 @@ class NodeVM extends EventEmitter {
 			console,
 			setTimeout,
 			setInterval,
-			setImmediate: _setImmediate3.default,
+			setImmediate,
 			clearTimeout,
 			clearInterval,
-			clearImmediate: _clearImmediate3.default,
+			clearImmediate,
 			String,
 			Number,
 			Buffer,
@@ -229,12 +185,12 @@ class NodeVM extends EventEmitter {
 			VMError,
 			Proxy,
 			Reflect,
-			Map: _map2.default,
-			WeakMap: _weakMap2.default,
-			Set: _set2.default,
-			WeakSet: _weakSet2.default,
-			Promise: _promise2.default
-		};
+			Map,
+			WeakMap,
+			Set,
+			WeakSet,
+			Promise
+		}
 
 		if (this.options.nesting) {
 			host.VM = VM;
@@ -244,20 +200,20 @@ class NodeVM extends EventEmitter {
 		this._context = vm.createContext();
 
 		Object.defineProperty(this, '_internal', {
-			value: vm.runInContext(`(function(require, host) { ${ cf } \n})`, this._context, {
-				filename: `${ __dirname }/contextify.jstext`,
+			value: vm.runInContext(`(function(require, host) { ${cf} \n})`, this._context, {
+				filename: `${__dirname}/contextify.jstext`,
 				displayErrors: false
 			}).call(this._context, require, host)
-		});
+		})
 
-		let closure = vm.runInContext(`(function (vm, host, Contextify, Decontextify, Buffer) { ${ sb } \n})`, this._context, {
-			filename: `${ __dirname }/sandbox.jstext`,
+		let closure = vm.runInContext(`(function (vm, host, Contextify, Decontextify, Buffer) { ${sb} \n})`, this._context, {
+			filename: `${__dirname}/sandbox.jstext`,
 			displayErrors: false
-		});
+		})
 
 		Object.defineProperty(this, '_prepareRequire', {
 			value: closure.call(this._context, this, host, this._internal.Contextify, this._internal.Decontextify, this._internal.Buffer)
-		});
+		})
 
 		// prepare global sandbox
 		if (this.options.sandbox) {
@@ -282,40 +238,37 @@ class NodeVM extends EventEmitter {
 	}
 
 	/**
-  * @deprecated
-  */
+	 * @deprecated
+	 */
 
-	call(method) {
+	call(method, ...args) {
 		if ('function' === typeof method) {
-			for (var _len = arguments.length, args = Array(_len > 1 ? _len - 1 : 0), _key = 1; _key < _len; _key++) {
-				args[_key - 1] = arguments[_key];
-			}
-
 			return method.apply(args);
+
 		} else {
 			throw new VMError("Unrecognized method type.");
 		}
 	}
 
 	/**
-  * Require a module in VM and return it's exports.
-  *
-  * @return {*} Exported module.
-  */
+	 * Require a module in VM and return it's exports.
+	 *
+	 * @return {*} Exported module.
+	 */
 
 	require(module) {
-		return this.run(`module.exports = require('${ module }');`, 'vm.js');
+		return this.run(`module.exports = require('${module}');`, 'vm.js');
 	}
 
 	/**
-  * Run the code in NodeVM.
-  *
-  * First time you run this method, code is executed same way like in node's regular `require` - it's executed with `module`, `require`, `exports`, `__dirname`, `__filename` variables and expect result in `module.exports'.
-  *
-  * @param {String} code Code to run.
-  * @param {String} [filename] Filename that shows up in any stack traces produced from this script.
-  * @return {*} Result of executed code.
-  */
+	 * Run the code in NodeVM.
+	 *
+	 * First time you run this method, code is executed same way like in node's regular `require` - it's executed with `module`, `require`, `exports`, `__dirname`, `__filename` variables and expect result in `module.exports'.
+	 *
+	 * @param {String} code Code to run.
+	 * @param {String} [filename] Filename that shows up in any stack traces produced from this script.
+	 * @return {*} Result of executed code.
+	 */
 
 	run(code, filename) {
 		if (this.options.compiler !== 'javascript') {
@@ -325,6 +278,7 @@ class NodeVM extends EventEmitter {
 		if (filename) {
 			filename = pa.resolve(filename);
 			var dirname = pa.dirname(filename);
+
 		} else {
 			filename = null;
 			var dirname = null;
@@ -334,7 +288,7 @@ class NodeVM extends EventEmitter {
 			displayErrors: false
 		});
 
-		let script = new vm.Script(`(function (exports, require, module, __filename, __dirname) { ${ code } \n})`, {
+		let script = new vm.Script(`(function (exports, require, module, __filename, __dirname) { ${code} \n})`, {
 			filename: filename || "vm.js",
 			displayErrors: false
 		});
@@ -358,13 +312,13 @@ class NodeVM extends EventEmitter {
 	}
 
 	/**
-  * Create NodeVM and run code inside it.
-  *
-  * @param {String} script Javascript code.
-  * @param {String} [filename] File name (used in stack traces only).
-  * @param {Object} [options] VM options.
-  * @return {NodeVM} VM.
-  */
+	 * Create NodeVM and run code inside it.
+	 *
+	 * @param {String} script Javascript code.
+	 * @param {String} [filename] File name (used in stack traces only).
+	 * @param {Object} [options] VM options.
+	 * @return {NodeVM} VM.
+	 */
 
 	static code(script, filename, options) {
 		if (filename != null) {
@@ -386,18 +340,18 @@ class NodeVM extends EventEmitter {
 	}
 
 	/**
-  * Create NodeVM and run script from file inside it.
-  *
-  * @param {String} [filename] File name (used in stack traces only).
-  * @param {Object} [options] VM options.
-  * @return {NodeVM} VM.
-  */
+	 * Create NodeVM and run script from file inside it.
+	 *
+	 * @param {String} [filename] File name (used in stack traces only).
+	 * @param {Object} [options] VM options.
+	 * @return {NodeVM} VM.
+	 */
 
 	static file(filename, options) {
 		filename = pa.resolve(filename);
 
 		if (!fs.existsSync(filename)) {
-			throw new VMError(`Script '${ filename }' not found.`);
+			throw new VMError(`Script '${filename}' not found.`);
 		}
 
 		if (fs.statSync(filename).isDirectory()) {
